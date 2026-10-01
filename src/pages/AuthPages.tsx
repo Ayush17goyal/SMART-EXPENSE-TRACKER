@@ -8,7 +8,6 @@ import {
 import {
   ArrowRight,
   CheckCircle2,
-  Command,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -22,7 +21,7 @@ import {
   signupSchema,
   strongPassword,
 } from "../auth/authValidation";
-import { supabase } from "../lib/supabase";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 function Layout({
   title,
@@ -36,11 +35,8 @@ function Layout({
   return (
     <main className="auth-page">
       <section className="auth-brand">
-        <Link to="/" className="auth-logo">
-          <span>
-            <Command size={24} />
-          </span>
-          pocketwise<b>.</b>
+        <Link to="/" className="auth-logo" aria-label="PocketWise home">
+          <img src="/pocketwise-logo.png" alt="PocketWise" />
         </Link>
         <div>
           <span className="auth-kicker">STUDENT FINANCIAL INTELLIGENCE</span>
@@ -68,6 +64,13 @@ function Layout({
             <h2>{title}</h2>
             <p>{subtitle}</p>
           </div>
+          {!isSupabaseConfigured && (
+            <Message kind="info">
+              Authentication is not configured on this installation. Add the
+              Supabase project URL and anonymous key to <code>.env.local</code>,
+              then restart the server.
+            </Message>
+          )}
           {children}
         </div>
       </section>
@@ -140,12 +143,15 @@ function GoogleButton({
   return (
     <button
       className="google-button"
-      disabled={busy}
+      disabled={busy || !isSupabaseConfigured}
       onClick={async () => {
         setBusy(true);
-        const { error } = await authService.google();
-        if (error) {
+        try {
+          const { error } = await authService.google();
+          if (error) setError(authMessage(error));
+        } catch (error) {
           setError(authMessage(error));
+        } finally {
           setBusy(false);
         }
       }}
@@ -172,24 +178,26 @@ export function Login() {
       return;
     }
     setBusy(true);
-    const { data, error } = await authService.signIn(
-      parsed.data.email,
-      parsed.data.password,
-      remember,
-    );
-    setBusy(false);
-    if (error) {
+    try {
+      const { data, error } = await authService.signIn(
+        parsed.data.email,
+        parsed.data.password,
+        remember,
+      );
+      if (error) throw error;
+      if (!data.user?.email_confirmed_at) {
+        await authService.signOut();
+        nav(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
+      nav((location.state as { from?: string })?.from ?? "/dashboard", {
+        replace: true,
+      });
+    } catch (error) {
       setError(authMessage(error));
-      return;
+    } finally {
+      setBusy(false);
     }
-    if (!data.user?.email_confirmed_at) {
-      await authService.signOut();
-      nav(`/verify-email?email=${encodeURIComponent(email)}`);
-      return;
-    }
-    nav((location.state as { from?: string })?.from ?? "/dashboard", {
-      replace: true,
-    });
   }
   return (
     <Layout
@@ -224,7 +232,10 @@ export function Login() {
           <Link to="/forgot-password">Forgot password?</Link>
         </div>
         {error && <Message>{error}</Message>}
-        <button className="auth-submit" disabled={busy}>
+        <button
+          className="auth-submit"
+          disabled={busy || !isSupabaseConfigured}
+        >
           {busy ? (
             <>
               <span className="auth-spinner" />
@@ -338,7 +349,10 @@ export function Signup() {
           onChange={setConfirm}
         />
         {error && <Message>{error}</Message>}
-        <button className="auth-submit" disabled={busy}>
+        <button
+          className="auth-submit"
+          disabled={busy || !isSupabaseConfigured}
+        >
           {busy ? (
             <>
               <span className="auth-spinner" />
@@ -416,7 +430,10 @@ export function ForgotPassword() {
             </span>
           </label>
           {error && <Message>{error}</Message>}
-          <button className="auth-submit" disabled={busy}>
+          <button
+            className="auth-submit"
+            disabled={busy || !isSupabaseConfigured}
+          >
             {busy ? "Sending…" : "Send reset link"}
           </button>
           <p className="auth-switch">
@@ -488,7 +505,10 @@ export function ResetPassword() {
             10+ characters with uppercase, lowercase, number, and symbol.
           </small>
           {error && <Message>{error}</Message>}
-          <button className="auth-submit" disabled={busy}>
+          <button
+            className="auth-submit"
+            disabled={busy || !isSupabaseConfigured}
+          >
             {busy ? "Updating…" : "Update password"}
           </button>
         </form>
@@ -523,7 +543,7 @@ export function VerifyEmail() {
         {status && <Message kind="info">{status}</Message>}
         <button
           className="google-button"
-          disabled={busy || !email}
+          disabled={busy || !email || !isSupabaseConfigured}
           onClick={async () => {
             setBusy(true);
             const { error } = await authService.resend(email);

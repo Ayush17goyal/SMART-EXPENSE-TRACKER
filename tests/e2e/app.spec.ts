@@ -6,18 +6,14 @@ test("protected routes redirect signed-out visitors", async ({ page }) => {
     page.getByRole("heading", { name: "Welcome back" }),
   ).toBeVisible();
 });
-test("signup is public, responsive, and validates input", async ({ page }) => {
+test("signup is public, responsive, and reports missing backend configuration", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
   await page.goto("/signup");
   await expect(
     page.getByRole("heading", { name: "Create your workspace" }),
   ).toBeVisible();
-  await page.getByLabel("Full name").fill("Alex Student");
-  await page.getByLabel("Email address").fill("alex@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("weak");
-  await page.getByLabel("Confirm password").fill("different");
-  await page.getByRole("button", { name: /Create account/ }).click();
-  await expect(page.getByRole("alert")).toContainText("10 characters");
+  await expect(page.getByText(/Authentication is not configured/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Create account/ })).toBeDisabled();
 });
 test("password recovery does not reveal account existence", async ({
   page,

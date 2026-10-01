@@ -3482,3 +3482,31 @@ input::placeholder {
     font-size: 18px;
   }
 }
+
+.auth-page,
+.auth-brand,
+.auth-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+.auth-logo {
+  width: min(235px, 100%);
+  display: block;
+}
+.auth-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 12px 36px #020a1466;
+}
+.auth-card > .auth-message.info {
+  margin: -10px 0 18px;
+  background: #142f50;
+  border: 1px solid #285277;
+  color: #c8def0;
+  line-height: 1.5;
+}
+.auth-card > .auth-message.info code {
+  color: #ddf5ff;
+}

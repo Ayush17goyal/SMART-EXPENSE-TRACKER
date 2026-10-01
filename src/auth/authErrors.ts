@@ -1,6 +1,8 @@
 export function authMessage(error: unknown) {
   const value = error instanceof Error ? error.message : String(error ?? "");
   const text = value.toLowerCase();
+  if (text.includes("not configured"))
+    return "Authentication is not configured yet. Add the Supabase environment values and restart the server.";
   if (text.includes("invalid login")) return "Email or password is incorrect.";
   if (text.includes("email not confirmed"))
     return "Verify your email before signing in.";
