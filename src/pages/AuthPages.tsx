@@ -36,7 +36,7 @@ function Layout({
     <main className="auth-page">
       <section className="auth-brand">
         <Link to="/" className="auth-logo" aria-label="PocketWise home">
-          <img src="/pocketwise-logo.png" alt="PocketWise" />
+          <img src="/pocketwise-logo-transparent.png" alt="PocketWise" />
         </Link>
         <div>
           <span className="auth-kicker">STUDENT FINANCIAL INTELLIGENCE</span>

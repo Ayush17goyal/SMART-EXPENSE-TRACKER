@@ -3497,8 +3497,7 @@ input::placeholder {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 14px;
-  box-shadow: 0 12px 36px #020a1466;
+  filter: drop-shadow(0 10px 18px #020a1480);
 }
 .auth-card > .auth-message.info {
   margin: -10px 0 18px;
