@@ -1,9 +1,8 @@
 import Dexie, { type Table } from 'dexie';
-import { createClient } from '@supabase/supabase-js';
 import { ledgerSchema, type Ledger } from '../domain/model.ts';
 import type { Analysis } from '../domain/engine.ts';
-const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase=url&&key?createClient(url,key):null;
+import {supabase} from '../lib/supabase.ts';
+export {supabase};
 export type Mode='local'|'cloud'|'demo';
 class Database extends Dexie {ledgers!:Table<{id:string;ledger:Ledger},string>;constructor(){super('pocketwise-v1');this.version(1).stores({ledgers:'id'});}}
 export const db=new Database();

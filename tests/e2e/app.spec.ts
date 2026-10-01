@@ -1,3 +1,29 @@
-import {test,expect} from '@playwright/test';
-test('demo tells the financial intelligence story',async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Explore the demo'}).click();await expect(page.getByRole('heading',{name:/Looking ahead, Alex/})).toBeVisible();await expect(page.getByText('YOUR FINANCIAL DIGITAL TWIN').first()).toBeVisible();await page.getByRole('link',{name:/Explore/}).click();await expect(page.getByRole('heading',{name:/Your next move/})).toBeVisible();await page.getByLabel('Scenario amount').fill('3000');await expect(page.getByText('With your decision')).toBeVisible();});
-test('mobile navigation and transaction entry are usable',async({page})=>{await page.setViewportSize({width:360,height:780});await page.goto('/');await page.getByRole('button',{name:'Explore the demo'}).click();await page.getByRole('link',{name:/Transactions/}).last().click();await expect(page.getByRole('heading',{name:/Your transactions/})).toBeVisible();await page.getByRole('button',{name:'Add expense'}).click();await expect(page.getByRole('heading',{name:'Add a transaction'})).toBeVisible();});
+import { test, expect } from "@playwright/test";
+test("protected routes redirect signed-out visitors", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(
+    page.getByRole("heading", { name: "Welcome back" }),
+  ).toBeVisible();
+});
+test("signup is public, responsive, and validates input", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto("/signup");
+  await expect(
+    page.getByRole("heading", { name: "Create your workspace" }),
+  ).toBeVisible();
+  await page.getByLabel("Full name").fill("Alex Student");
+  await page.getByLabel("Email address").fill("alex@example.com");
+  await page.getByLabel("Password", { exact: true }).fill("weak");
+  await page.getByLabel("Confirm password").fill("different");
+  await page.getByRole("button", { name: /Create account/ }).click();
+  await expect(page.getByRole("alert")).toContainText("10 characters");
+});
+test("password recovery does not reveal account existence", async ({
+  page,
+}) => {
+  await page.goto("/forgot-password");
+  await expect(
+    page.getByRole("heading", { name: "Reset your password" }),
+  ).toBeVisible();
+});

@@ -60,18 +60,18 @@ Natural-language entry and common financial questions have deterministic support
 
 ## Feature map
 
-| Area | What Pocketwise provides |
-| --- | --- |
-| Transactions | Expense and income records, categories, merchant normalization, CSV import/export, and natural-language drafts |
-| Analytics | Period comparisons, category and merchant attribution, spending velocity, and evidence references |
-| Forecasting | Commitment-aware month-end estimates with actual and projected values clearly separated |
-| Smart budgets | History-informed suggestions that remain proposals until the user accepts them |
-| Pattern detection | Unusual transaction review and recurring payment candidates with confirmation workflows |
-| Financial health | Explainable dimensions for budget adherence, saving consistency, recurring load, and upcoming pressure |
-| Planning | Allowance, scheduled bills, goals, protected savings, and cash checkpoints |
-| Digital Twin | Calculation-driven purchase and spending-change simulations across multiple horizons |
-| Financial search | Bounded questions answered from authorized records rather than invented transactions |
-| Accessibility | Responsive dark interface, keyboard-friendly controls, readable chart context, and reduced-motion support |
+| Area              | What Pocketwise provides                                                                                       |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- |
+| Transactions      | Expense and income records, categories, merchant normalization, CSV import/export, and natural-language drafts |
+| Analytics         | Period comparisons, category and merchant attribution, spending velocity, and evidence references              |
+| Forecasting       | Commitment-aware month-end estimates with actual and projected values clearly separated                        |
+| Smart budgets     | History-informed suggestions that remain proposals until the user accepts them                                 |
+| Pattern detection | Unusual transaction review and recurring payment candidates with confirmation workflows                        |
+| Financial health  | Explainable dimensions for budget adherence, saving consistency, recurring load, and upcoming pressure         |
+| Planning          | Allowance, scheduled bills, goals, protected savings, and cash checkpoints                                     |
+| Digital Twin      | Calculation-driven purchase and spending-change simulations across multiple horizons                           |
+| Financial search  | Bounded questions answered from authorized records rather than invented transactions                           |
+| Accessibility     | Responsive dark interface, keyboard-friendly controls, readable chart context, and reduced-motion support      |
 
 ## How it works
 
@@ -117,15 +117,17 @@ npm run dev
 
 Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-Choose **Explore the demo** for a ready-made synthetic dataset, or **Start on this device** to use private local storage. Cloud configuration is optional.
+Configure Supabase before signing up. Public authentication routes remain visible without configuration, but real accounts and protected financial storage require the Supabase project described below.
 
 ## Cloud configuration
 
-1. Create separate development and pilot Supabase projects.
-2. Review and apply [`supabase/migrations/202610010001_initial.sql`](supabase/migrations/202610010001_initial.sql).
-3. Add invited, lowercase email addresses to `pilot_invites` before registration.
-4. Deploy the [`finance` Edge Function](supabase/functions/finance/index.ts) and configure `APP_ORIGIN`.
-5. Copy `.env.example` to `.env.local` and add the public Supabase values:
+1. Create separate development and production Supabase projects.
+2. Review and apply both migrations in [`supabase/migrations`](supabase/migrations). The second migration enables public signup, profiles, and stronger ownership constraints.
+3. Enable email confirmation and configure Google OAuth if desired in Supabase Auth.
+4. Add the local and production callback/reset URLs listed in `.env.example` to the Supabase redirect allowlist.
+5. Deploy the [`finance` Edge Function](supabase/functions/finance/index.ts) and configure `APP_ORIGINS` with comma-separated local and production origins.
+6. Copy `.env.example` to `.env.local` and add the public Supabase values:
+7. Before launch, configure Supabase Auth rate limits, SMTP delivery, CAPTCHA, password policy, and the production Site URL. Keep automatic identity linking limited to provider-verified email addresses.
 
 ```env
 VITE_SUPABASE_URL=your-project-url
