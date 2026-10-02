@@ -107,6 +107,24 @@ p {
   color: #d7955c;
   margin-left: 1px;
 }
+.main-brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 112px;
+  border-radius: 18px;
+  text-decoration: none;
+}
+.main-brand-logo img {
+  display: block;
+  width: 168px;
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.2));
+}
+.main-brand-logo:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
 .workspace-label,
 .eyebrow {
   display: flex;

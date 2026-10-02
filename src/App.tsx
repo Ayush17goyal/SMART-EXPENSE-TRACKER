@@ -13,7 +13,6 @@ import {
   Bell,
   BookOpen,
   CircleHelp,
-  Command,
   Compass,
   LayoutDashboard,
   Leaf,
@@ -547,12 +546,9 @@ function DashboardApp() {
 function Logo() {
   return (
     <>
-      <div className="logo">
-        <span>
-          <Command size={22} />
-        </span>
-        pocketwise<span className="logo-dot">.</span>
-      </div>
+      <NavLink to="/dashboard" className="main-brand-logo" aria-label="PocketWise dashboard">
+        <img src="/pocketwise-logo-transparent.png" alt="PocketWise" />
+      </NavLink>
       <ThemeToggle />
     </>
   );
