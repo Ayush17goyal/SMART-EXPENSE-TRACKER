@@ -108,6 +108,14 @@ function CloudDashboard() {
 
 function DashboardApp() {
   const { profile, user } = useAuth();
+  const accountName =
+    profile?.full_name?.trim() ||
+    user?.user_metadata?.full_name?.trim() ||
+    user?.user_metadata?.name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Student";
+  const accountAvatar =
+    profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const [mode, setMode] = useState<Mode>("cloud");
   const [theme, setTheme] = useState<"dark" | "light">(() =>
     localStorage.getItem("pocketwise-theme") === "light" ? "light" : "dark",
@@ -159,16 +167,14 @@ function DashboardApp() {
       const data = await adapter(mode).load();
       if (!canceled) {
         const next = data ?? emptyLedger(asOf);
-        if (!data)
-          next.profile.name =
-            profile?.full_name || user?.user_metadata?.full_name || "Student";
+        if (!data || next.profile.name === "Student") next.profile.name = accountName;
         setLedger(next);
       }
     })().catch((e) => !canceled && setError(readableError(e)));
     return () => {
       canceled = true;
     };
-  }, [mode, sessionKey, profile?.full_name, user?.id]);
+  }, [mode, sessionKey, accountName, user?.id]);
   const analysis = useQuery({
     queryKey: ["analysis", mode, sessionKey, ledger?.revision],
     queryFn: () => calculate(ledger!, asOf, mode!),
@@ -258,11 +264,10 @@ function DashboardApp() {
           <CircleHelp size={17} /> A quick guide
         </button>
         <div className="sidebar-user">
-          <span className="avatar">
-            {ledger?.profile.name.slice(0, 1) || "S"}
-          </span>
+          <AccountAvatar src={accountAvatar} name={accountName} />
           <div>
-            <strong>{ledger?.profile.name ?? "Student"}</strong>
+            <strong>{accountName}</strong>
+            <span className="account-email">{user?.email}</span>
             <small>
               {mode === "demo"
                 ? "Demo workspace"
@@ -295,9 +300,7 @@ function DashboardApp() {
             >
               <Bell size={18} />
             </button>
-            <span className="avatar small">
-              {ledger?.profile.name.slice(0, 1) || "S"}
-            </span>
+            <AccountAvatar src={accountAvatar} name={accountName} small />
           </div>
         </header>
         {mode === "demo" && (
@@ -525,6 +528,12 @@ function Logo() {
       <ThemeToggle />
     </>
   );
+}
+
+function AccountAvatar({src,name,small=false}:{src?:string|null;name:string;small?:boolean}) {
+  return <span className={`avatar${small?' small':''}`} aria-label={`Signed in as ${name}`}>
+    {src?<img src={src} alt="" referrerPolicy="no-referrer"/>:name.slice(0,1).toUpperCase()}
+  </span>;
 }
 function ThemeToggle() {
   const [light, setLight] = useState(
