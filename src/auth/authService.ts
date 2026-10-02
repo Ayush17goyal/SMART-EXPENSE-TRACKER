@@ -50,8 +50,8 @@ export const authService = {
     return requireClient().auth.signOut({ scope });
   },
   async deleteAccount() {
-    const { data, error } = await requireClient().functions.invoke("finance", {
-      body: { action: "delete-account", confirmation: "DELETE" },
+    const { data, error } = await requireClient().rpc("delete_own_account", {
+      p_confirmation: "DELETE",
     });
     if (error) throw error;
     return data;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   Navigate,
   NavLink,
@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Sparkles,
   Sun,
+  TrendingUp,
   Wallet,
   X,
 } from "lucide-react";
@@ -121,6 +122,7 @@ function DashboardApp() {
     localStorage.getItem("pocketwise-theme") === "light" ? "light" : "dark",
   );
   const [ledger, setLedger] = useState<Ledger | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [add, setAdd] = useState(false);
@@ -154,6 +156,7 @@ function DashboardApp() {
     let canceled = false;
     setLedger(null);
     setError("");
+    setLoadState("loading");
     if (!mode) return;
     localStorage.setItem("pocketwise-mode", mode);
     (async () => {
@@ -169,8 +172,14 @@ function DashboardApp() {
         const next = data ?? emptyLedger(asOf);
         if (!data || next.profile.name === "Student") next.profile.name = accountName;
         setLedger(next);
+        setLoadState("ready");
       }
-    })().catch((e) => !canceled && setError(readableError(e)));
+    })().catch((e) => {
+      if (!canceled) {
+        setError(readableError(e));
+        setLoadState("error");
+      }
+    });
     return () => {
       canceled = true;
     };
@@ -315,7 +324,7 @@ function DashboardApp() {
           </div>
         )}
         <main className="content">
-          {error && (
+          {error && loadState === "ready" && (
             <div className="error" role="alert">
               {error}
               <button
@@ -333,37 +342,43 @@ function DashboardApp() {
               </button>
             </div>
           )}
-          {analysis.error && (
-            <div className="error" role="alert">
-              {readableError(analysis.error)}
-              <button onClick={() => analysis.refetch()}>Retry analysis</button>
-            </div>
+          {loadState === "loading" && <WorkspaceLoading />}
+          {loadState === "error" && (
+            <WorkspaceError
+              message={error}
+              retry={() => setSessionKey((v) => v + 1)}
+              signOut={leave}
+            />
           )}
-          {ledger && analysis.data ? (
+          {loadState === "ready" && ledger && (
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route
                 path="/dashboard"
                 element={
-                  <Today
+                  <AnalysisGate analysis={analysis} retry={() => analysis.refetch()}>
+                  {(value) => <Today
                     ledger={ledger}
-                    a={analysis.data}
+                    a={value}
                     onEvidence={setEvidence}
                     onAdd={() => setAdd(true)}
                     mutate={mutate}
-                  />
+                  />}
+                  </AnalysisGate>
                 }
               />
               <Route
                 path="/financial-health"
                 element={
-                  <Today
+                  <AnalysisGate analysis={analysis} retry={() => analysis.refetch()}>
+                  {(value) => <Today
                     ledger={ledger}
-                    a={analysis.data}
+                    a={value}
                     onEvidence={setEvidence}
                     onAdd={() => setAdd(true)}
                     mutate={mutate}
-                  />
+                  />}
+                  </AnalysisGate>
                 }
               />
               <Route
@@ -380,25 +395,29 @@ function DashboardApp() {
               <Route
                 path="/plan"
                 element={
-                  <Plan
+                  <AnalysisGate analysis={analysis} retry={() => analysis.refetch()}>
+                  {(value) => <Plan
                     ledger={ledger}
                     asOf={asOf}
-                    a={analysis.data}
+                    a={value}
                     mutate={mutate}
-                  />
+                  />}
+                  </AnalysisGate>
                 }
               />
               <Route
                 path="/explore"
                 element={
-                  <Explore
+                  <AnalysisGate analysis={analysis} retry={() => analysis.refetch()}>
+                  {(value) => <Explore
                     ledger={ledger}
                     asOf={asOf}
-                    a={analysis.data}
+                    a={value}
                     mutate={mutate}
                     onEvidence={setEvidence}
                     mode={mode}
-                  />
+                  />}
+                  </AnalysisGate>
                 }
               />
               <Route
@@ -427,15 +446,6 @@ function DashboardApp() {
                 }
               />
             </Routes>
-          ) : (
-            <div className="loading">
-              <Leaf size={32} />
-              <h2>Getting your financial picture ready…</h2>
-              <p>Reading your records and calculating the details.</p>
-              <button className="text-button" onClick={leave}>
-                Choose another workspace
-              </button>
-            </div>
           )}
         </main>
         <footer className="app-footer">
@@ -507,8 +517,8 @@ function DashboardApp() {
               changing your real records.
             </p>
             <div className="notice">
-              Device-only data stays in this browser. Export a backup regularly;
-              clearing browser data removes it.
+              Cloud records are isolated to your verified account. Optional AI
+              is separate and can be disabled in Settings.
             </div>
           </div>
         </Modal>
@@ -534,6 +544,14 @@ function AccountAvatar({src,name,small=false}:{src?:string|null;name:string;smal
   return <span className={`avatar${small?' small':''}`} aria-label={`Signed in as ${name}`}>
     {src?<img src={src} alt="" referrerPolicy="no-referrer"/>:name.slice(0,1).toUpperCase()}
   </span>;
+}
+
+function WorkspaceLoading(){return <div className="loading" role="status"><span className="auth-spinner"/><h2>Loading your financial records…</h2><p>This usually takes only a moment.</p></div>}
+function WorkspaceError({message,retry,signOut}:{message:string;retry:()=>void;signOut:()=>void}){return <div className="state-panel" role="alert"><Leaf size={32}/><h2>We couldn’t load your financial data.</h2><p>{message||'Check your connection and try again.'}</p><div className="state-actions"><button className="primary" onClick={retry}>Try again</button><button className="secondary" onClick={signOut}>Return to sign in</button></div></div>}
+function AnalysisGate({analysis,retry,children}:{analysis:{data?:import('./domain/engine').Analysis;error:Error|null;isLoading:boolean};retry:()=>void;children:(value:import('./domain/engine').Analysis)=>ReactNode}){
+ if(analysis.data)return <>{children(analysis.data)}</>;
+ if(analysis.error)return <div className="state-panel" role="alert"><TrendingUp size={32}/><h2>Your records loaded, but analysis could not be calculated.</h2><p>{readableError(analysis.error)}</p><p>You can still use Transactions and Settings.</p><button className="primary" onClick={retry}>Retry analysis</button></div>;
+ return <div className="loading compact" role="status"><span className="auth-spinner"/><h2>Analyzing your financial activity…</h2><p>Your records are ready. Calculations are running separately.</p></div>;
 }
 function ThemeToggle() {
   const [light, setLight] = useState(

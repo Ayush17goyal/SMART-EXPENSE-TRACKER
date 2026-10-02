@@ -114,7 +114,7 @@ export default function Settings({
           </p>
         </div>
         <button className="secondary" onClick={onLeave}>
-          Switch workspace
+          Sign out
         </button>
       </div>
       {error && (

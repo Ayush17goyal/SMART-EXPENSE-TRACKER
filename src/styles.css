@@ -251,6 +251,28 @@ p {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.state-panel {
+  display: grid;
+  min-height: 420px;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.state-panel > svg { color: var(--accent); }
+.state-panel h2,
+.state-panel p { margin: 0; }
+.state-panel p { max-width: 560px; color: var(--muted); }
+.state-actions { display: flex; gap: 10px; margin-top: 10px; }
+.loading.compact { min-height: 420px; }
+.compact-filter {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.compact-filter input { min-width: 135px; }
 .main-shell {
   grid-column: 2;
   min-width: 0;

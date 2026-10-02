@@ -56,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const client=supabase;
+    const initializationTimeout = window.setTimeout(() => {
+      if (active) setLoading(false);
+    }, 10_000);
     client.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       const current = data.session;
@@ -64,8 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         : null;
       setSession(verified ? current : null);
       setUser(verified);
-      if (verified) await loadProfile(verified.id);
       setLoading(false);
+      window.clearTimeout(initializationTimeout);
+      if (verified) void loadProfile(verified.id);
+    }).catch(() => {
+      if (active) {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
+      window.clearTimeout(initializationTimeout);
     });
     const { data } = client.auth.onAuthStateChange((_event, next) => {
       setSession(next);
@@ -76,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => {
       active = false;
+      window.clearTimeout(initializationTimeout);
       data.subscription.unsubscribe();
     };
   }, []);
