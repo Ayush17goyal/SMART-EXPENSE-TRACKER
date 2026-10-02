@@ -578,12 +578,12 @@ function ThemeToggle() {
   }, [light]);
   return (
     <button
-      className="theme-toggle"
+      className="theme-toggle theme-icon-toggle"
       aria-label={light ? "Switch to dark theme" : "Switch to light theme"}
+      title={light ? "Switch to dark theme" : "Switch to light theme"}
       onClick={() => setLight((v) => !v)}
     >
-      {light ? <Moon size={14} /> : <Sun size={14} />}{" "}
-      {light ? "Dark theme" : "Light theme"}
+      {light ? <Moon size={18} /> : <Sun size={18} />}
     </button>
   );
 }

@@ -125,6 +125,16 @@ p {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+.theme-icon-toggle {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+}
 .workspace-label,
 .eyebrow {
   display: flex;
