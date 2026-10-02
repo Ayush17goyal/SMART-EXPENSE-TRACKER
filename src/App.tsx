@@ -38,6 +38,7 @@ import { DEMO_DATE, demoLedger } from "./domain/demo";
 import {
   adapter,
   calculate,
+  localAdapter,
   supabase,
   releaseWorker,
   type Mode,
@@ -123,6 +124,7 @@ function DashboardApp() {
   );
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [deviceFallback, setDeviceFallback] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [add, setAdd] = useState(false);
@@ -157,6 +159,7 @@ function DashboardApp() {
     setLedger(null);
     setError("");
     setLoadState("loading");
+    setDeviceFallback(false);
     if (!mode) return;
     localStorage.setItem("pocketwise-mode", mode);
     (async () => {
@@ -167,7 +170,17 @@ function DashboardApp() {
           return;
         }
       }
-      const data = await adapter(mode).load();
+      let data: Ledger | null;
+      try {
+        data = await adapter(mode).load();
+      } catch (cloudError) {
+        if (mode !== "cloud" || !user?.id) throw cloudError;
+        data = await localAdapter(`cloud-fallback:${user.id}`).load();
+        if (!canceled) {
+          setDeviceFallback(true);
+          setError("Cloud storage is not ready, so this workspace is temporarily saved only on this device. Apply the Supabase migrations, then use Reload data.");
+        }
+      }
       if (!canceled) {
         const next = data ?? emptyLedger(asOf);
         if (!data || next.profile.name === "Student") next.profile.name = accountName;
@@ -195,7 +208,10 @@ function DashboardApp() {
     try {
       const next = structuredClone(ledger);
       fn(next);
-      const result = await adapter(mode).save(next, ledger.revision);
+      const store = deviceFallback && user?.id
+        ? localAdapter(`cloud-fallback:${user.id}`)
+        : adapter(mode);
+      const result = await store.save(next, ledger.revision);
       setLedger(result);
       setNotice("Changes saved");
       return true;
@@ -296,7 +312,9 @@ function DashboardApp() {
           <div className="top-actions">
             <span className="storage-badge">
               <span />
-              {mode === "demo"
+              {deviceFallback
+                ? "ON THIS DEVICE"
+                : mode === "demo"
                 ? "SYNTHETIC DEMO"
                 : mode === "local"
                   ? "ON THIS DEVICE"
@@ -338,7 +356,7 @@ function DashboardApp() {
                 className="text-button"
                 onClick={() => setSessionKey((v) => v + 1)}
               >
-                Reload data
+                {deviceFallback ? "Retry cloud" : "Reload data"}
               </button>
             </div>
           )}

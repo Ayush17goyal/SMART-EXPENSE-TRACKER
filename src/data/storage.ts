@@ -26,7 +26,7 @@ export const cloudAdapter:StorageAdapter={
   if(!supabase)throw new Error('Cloud is not configured.');
   const userId=await cloudUserId();
   const {data,error}=await withTimeout(supabase.from('user_ledgers').select('ledger').eq('user_id',userId).maybeSingle(),12_000,'Cloud data took too long to load. Please retry.');
-  if(error)throw new Error(error.code==='42P01'?'Cloud storage is not initialized. Apply the Supabase database migrations, then reload.':'Your cloud data could not be loaded. Please retry.');
+  if(error)throw new Error(['42P01','PGRST205'].includes(error.code)?'Cloud storage is not initialized. Apply the Supabase database migrations, then reload.':'Your cloud data could not be loaded. Please retry.');
   return data?.ledger?ledgerSchema.parse(data.ledger):null;
  },
  async save(ledger,expectedRevision){
